@@ -42,36 +42,27 @@ restore_cache_directories() {
   local cache_dir=${2:-}
 
   for cachepath in ${@:3}; do
+    if ! [ -e "$cache_dir/node/$cachepath" ]; then
+      mkdir -p $cache_dir/node/$cachepath
+    fi
     if [ -e "$build_dir/$cachepath" ]; then
-      echo "- $cachepath (exists - skipping)"
-    else
-      if [ -e "$cache_dir/node/$cachepath" ]; then
-        echo "- $cachepath"
-        mkdir -p $(dirname "$build_dir/$cachepath")
-        mv "$cache_dir/node/$cachepath" "$build_dir/$cachepath"
-      else
-        echo "- $cachepath (not cached - skipping)"
+      if ! [ -L "$build_dir/$cachepath" ]; then
+        echo "- $cachepath (exists - moving files then deleting - its not a link)"
+        ls $build_dir
+        ls $build_dir/$cachepath
+        cp -r "$build_dir/$cachepath/". "$cache_dir/node/$cachepath"
+        rm -rf $build_dir/$cachepath
       fi
     fi
+    echo "- linking $cachepath"
+    ln -s "$cache_dir/node/$cachepath" "$build_dir/$cachepath"
   done
 }
 
 clear_cache() {
-  rm -rf $CACHE_DIR/node
-  mkdir -p $CACHE_DIR/node
+  echo "- ignore clear_cache() (due to link)"
 }
 
 save_cache_directories() {
-  local build_dir=${1:-}
-  local cache_dir=${2:-}
-
-  for cachepath in ${@:3}; do
-    if [ -e "$build_dir/$cachepath" ]; then
-      echo "- $cachepath"
-      mkdir -p "$cache_dir/node/$cachepath"
-      cp -a "$build_dir/$cachepath" $(dirname "$cache_dir/node/$cachepath")
-    else
-      echo "- $cachepath (nothing to cache)"
-    fi
-  done
+  echo "- ignore save directories (due to link)"
 }
